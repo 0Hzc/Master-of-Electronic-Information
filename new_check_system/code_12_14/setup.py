@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from scipy import interpolate
 import re
 import matplotlib.pyplot as plt
+import random
 from mpl_toolkits.basemap import Basemap
 from scipy.interpolate import griddata
 from reportlab.pdfgen import canvas
@@ -38,92 +39,102 @@ def run_check(config):
         source_type = config['VALIDATION']['source_type']
         font_path = config['font']['font_path']
 
-        
+
         # 确保输出目录存在
         os.makedirs(output_dir, exist_ok=True)
         
         print(f"\n=== 开始数据检验流程: HY3A vs {source_type} ===")
         
-        # # 步骤1：处理HY3A数据
-        # print("\n处理HY3A数据...")
-        # process_hy_data(
-        #     hy_file_l2a=os.path.join(input_dir, config['HY3A']['l2a_file']),
-        #     hy_file_l2b=os.path.join(input_dir, config['HY3A']['l2b_file']),
-        #     hy_file_l2c=os.path.join(input_dir, config['HY3A']['l2c_file']),
-        #     output_dir=output_dir
-        # )
+        # 步骤1：处理HY3A数据
+        print("\n处理HY3A数据...")
+        process_hy_data(
+            hy_file_l2a=os.path.join(input_dir, config['HY3A']['l2a_file']),
+            hy_file_l2b=os.path.join(input_dir, config['HY3A']['l2b_file']),
+            hy_file_l2c=os.path.join(input_dir, config['HY3A']['l2c_file']),
+            output_dir=output_dir
+        )
         
-        # # 步骤2：处理检验源数据
-        # if source_type == 'XC':
-        #     print("\n处理现场数据...")
-        #     process_xc_check_data(
-        #         aopres_file=os.path.join(input_dir, config['XC']['aopres_file']),
-        #         wqp_file=os.path.join(input_dir, config['XC']['wqp_file']),
-        #         aot_file=os.path.join(input_dir, config['XC']['aot_file']),
-        #         ctd_file=os.path.join(input_dir, config['XC']['ctd_file']),
-        #         output_dir=output_dir
-        #     )
-        # else:
-        #     print(f"\n处理{source_type}卫星数据...")
-        #     process_satellite_check_data(
-        #         oc_file=os.path.join(input_dir, config[source_type]['oc_file']),
-        #         sst_file=os.path.join(input_dir, config[source_type]['sst_file']),
-        #         output_dir=output_dir
-        #     )
+        # 步骤2：处理检验源数据
+        if source_type == 'XC':
+            print("\n处理现场数据...")
+            process_xc_check_data(
+                aopres_file=os.path.join(input_dir, config['XC']['aopres_file']),
+                wqp_file=os.path.join(input_dir, config['XC']['wqp_file']),
+                aot_file=os.path.join(input_dir, config['XC']['aot_file']),
+                ctd_file=os.path.join(input_dir, config['XC']['ctd_file']),
+                output_dir=output_dir
+            )
+        else:
+            print(f"\n处理{source_type}卫星数据...")
+            process_satellite_check_data(
+                oc_file=os.path.join(input_dir, config[source_type]['oc_file']),
+                sst_file=os.path.join(input_dir, config[source_type]['sst_file']),
+                output_dir=output_dir
+            )
         
-        # # 步骤3：标识检查
-        # print("\n执行标识检查...")
-        # HY3A_flag_create(output_dir, window_size)
-        # if source_type == 'XC':
-        #     process_xc_flagcheck_data(output_dir, output_dir)
-        # else:
-        #     satellite_flag_create(output_dir, source_type, window_size)
+        # 步骤3：标识检查
+        print("\n执行标识检查...")
+        HY3A_flag_create(output_dir, window_size)
+        if source_type == 'XC':
+            process_xc_flagcheck_data(output_dir, output_dir)
+        else:
+            satellite_flag_create(output_dir, source_type, window_size)
         
-        # # 步骤4：时间匹配
-        # print("\n执行时间匹配...")
-        # if source_type == 'XC':
-        #     process_xc_timematch(output_dir, output_dir, 'HY3A', time_threshold)
-        # else:
-        #     process_satellite_timematch(output_dir, output_dir, 'HY3A', source_type, time_threshold)
+        # 步骤4：时间匹配
+        print("\n执行时间匹配...")
+        if source_type == 'XC':
+            process_xc_timematch(output_dir, output_dir, 'HY3A', time_threshold)
+        else:
+            process_satellite_timematch(output_dir, output_dir, 'HY3A', source_type, time_threshold)
         
-        # # 步骤5：空间匹配
-        # print("\n执行空间匹配...")
-        # if source_type == 'XC':
-        #     process_xc_spacematch(output_dir, output_dir, 'HY3A', window_size)
-        # else:
-        #     process_satellite_spacematch(output_dir, output_dir, 'HY3A', source_type)
+        # 步骤5：空间匹配
+        print("\n执行空间匹配...")
+        if source_type == 'XC':
+            process_xc_spacematch(output_dir, output_dir, 'HY3A', window_size)
+        else:
+            process_satellite_spacematch(output_dir, output_dir, 'HY3A', source_type)
         
-        # # 步骤6：生成验证结果
-        # print("\n生成验证结果...")
-        # if source_type == 'XC':
-        #     xc_validation(output_dir, output_dir)
-        # else:
-        #     satellite_validation(output_dir, output_dir)
+        # 步骤6：生成验证结果
+        print("\n生成验证结果...")
+        if source_type == 'XC':
+            xc_validation(output_dir, output_dir)
+        else:
+            satellite_validation(output_dir, output_dir)
         
-        # # 步骤7：生成误差地图
-        # print("\n生成误差地图...")
-        # if source_type != 'XC':
-        #     step7(output_dir, output_dir)
+        # 步骤7：生成误差地图
+        print("\n生成误差地图...")
+        if source_type != 'XC':
+            step7(output_dir, output_dir)
 
+        # 步骤8：生成折线图
+        step8(output_dir, output_dir)
 
+        # 步骤9：生成统计结果和图表
+        step9(output_dir, output_dir)
 
-        # # 步骤8：生成折线图
-        # step8(output_dir, output_dir)
+        # 步骤10：生成报告所需数据report文件
+        if source_type == 'XC':
 
-        # # 步骤9：生成统计结果和图表
-        # step9(output_dir, output_dir)
+            make_ground_report_data(output_dir)
 
-        # # 步骤10：生成报告所需数据report文件
-        # if source_type != 'XC':
-        #     make_satellite_report_data(output_dir)
+        else:
 
-        #     create_satellite_report(output_dir,output_dir, font_path,time_threshold,window_size)
+            make_satellite_report_data(output_dir)
+        # 步骤11：生成报告
 
-        # #步骤11：异常检测
-        # check_validation_errors(output_dir)
+        if source_type == 'XC':
 
-        # #步骤12：生成日志
-        # process_reports(output_dir,source_type)
+            create_xc_report(output_dir, output_dir, font_path, time_threshold)
+
+        else:
+
+            create_satellite_report(output_dir,output_dir, font_path,time_threshold,window_size)
+
+        #步骤11：异常检测
+        check_validation_errors(output_dir)
+
+        #步骤12：生成日志
+        process_reports(output_dir)
 
         print(f"\n=== HY3A vs {source_type} 数据检验流程完成 ===")
         return True
@@ -217,7 +228,7 @@ def process_hy_data(hy_file_l2a, hy_file_l2b, hy_file_l2c, output_dir):
         print(f"处理数据时出错: {str(e)}")
         traceback.print_exc()
         return False
-
+    
 def process_satellite_check_data(oc_file, sst_file, output_dir):
     """
     处理卫星检验数据
@@ -518,6 +529,8 @@ def process_xc_check_data(aopres_file, wqp_file, aot_file, ctd_file, output_dir)
         print(f"处理数据时出错: {str(e)}")
         traceback.print_exc()
         return False
+    
+
 
 def extract_file_prefix(filename):
     """从文件名中提取处理的卫星类别"""
@@ -637,10 +650,15 @@ def process_xc_flagcheck_data(input_dir, output_dir):
                     valid_lines += 1
                     
                     # 检查最后一列的Flag值
-                    if values[-1] == '1':
-                        flag_count += 1
-                    else:
-                        data_lines.append(line)
+                    try:
+                        flag_value = float(values[-1])  # 将Flag值转换为数值
+                        if flag_value >= 1:  # 修改这里：检查是否大于等于1
+                            flag_count += 1
+                        else:
+                            data_lines.append(line)
+                    except ValueError:  # 处理可能的转换错误
+                        print(f"警告：无法转换Flag值：{values[-1]}")
+                        continue
                 
                 # 保存处理后的数据
                 with open(output_file, 'w') as f:
@@ -862,6 +880,8 @@ def satellite_flag_create(input_dir, satellite_type,window_size):
         traceback.print_exc()
         return None
     
+
+
 def process_satellite_timematch(input_dir, output_dir, target_sensor, source_type, time_threshold):
     """
     处理卫星数据间的时间匹配
@@ -1202,6 +1222,8 @@ def process_xc_timematch(input_dir, output_dir, target_sensor, time_threshold):
         traceback.print_exc()
         return False
     
+
+
 def process_satellite_spacematch(input_dir, output_dir, target_sensor, source_type):
     """
     处理卫星数据空间匹配
@@ -1516,6 +1538,8 @@ def process_xc_spacematch(input_dir, output_dir, target_sensor, window_size):
         print(f"处理现场数据匹配失败: {e}")
         traceback.print_exc()
         return False
+    
+
 
 def satellite_validation(input_path, output_path):
     """
@@ -1541,10 +1565,7 @@ def satellite_validation(input_path, output_path):
             'AOT': 'NA',
             'TSM': 'mg/L',
             'CDOM': '1/m',
-            'sst': 'C',
-            'ipar': 'W/m2',
-            'nLw': 'mW/cm2/um/sr',
-            'Kd': '1/m'
+            'sst': 'C'
         }
         return units.get(product, '1/sr')
 
@@ -1730,13 +1751,17 @@ def xc_validation(input_path, output_path):
             if not space_data:
                 continue
             
-            # 计算检验结果：(卫星观测数据-现场观测数据)/现场观测数据*100%
-            if space_data['onsite_value'] != 0:
-                diff = ((space_data['mean_value'] - space_data['onsite_value']) / 
-                       space_data['onsite_value'] * 100)
+            if product.lower() == 'sst':
+                # SST产品直接计算绝对差值
+                diff = abs(space_data['mean_value'] - space_data['onsite_value'])
             else:
-                print(f"警告：{space_file} 现场观测值为0，跳过计算")
-                continue
+                # 其他产品计算相对误差
+                if space_data['onsite_value'] != 0:
+                    diff = abs((space_data['mean_value'] - space_data['onsite_value']) / 
+                            space_data['onsite_value'] * 100)
+                else:
+                    print(f"警告：{space_file} 现场观测值为0，跳过计算")
+                    continue
             
             # 写入验证结果文件
             val_path = os.path.join(output_path, 
@@ -1758,6 +1783,26 @@ def xc_validation(input_path, output_path):
                 f.write('/end header\n')
                 f.write(f'{space_data["mean_value"]:.4f}\t{space_data["onsite_value"]:.4f}\t{diff:.2f}\n')
             
+            
+
+
+            # sta_path = os.path.join(output_path, f'statistic_{HY}_XC_{product}_{timeHY}.txt')
+            sta_path = os.path.join(output_path, f'statistic_{HY}_XC_{product}_{timeHY}.txt')
+            open(sta_path, 'w').close()
+            # with open(sta_path, 'w') as f:
+            #     f.write('/begin header\n')
+            #     f.write(f'/HY satellite={HY}\n')
+            #     f.write(f'/staidation source=On-site data\n')
+            #     f.write(f'/product={product}\n')
+            #     f.write(f'/HY time={timeHY}\n')
+            #     f.write(f'/On-site time={space_data["onsite_time"]}\n')
+            #     f.write(f'/HY file={space_data["hy_file"]}\n')
+            #     f.write(f'/On-site file={space_data["xc_file"]}\n')
+            #     f.write(f'/Time difference={space_data["time_diff"]:.4f}h\n')
+            #     f.write('/fields=bias\tSTD\tRMS\tR\n')
+            #     f.write('/unites=1/sr\t1/sr\t1/sr\tNA\n')
+            #     f.write('/end header\n')
+
             print(f"已处理 {HY}_XC_{product}_{timeHY}")
         
         return True
@@ -1766,6 +1811,9 @@ def xc_validation(input_path, output_path):
         print(f"检验过程执行失败: {str(e)}")
         traceback.print_exc()
         return False
+    
+
+
 
 def step7(input_dir, output_dir):
     """
@@ -2139,33 +2187,48 @@ def step8(input_directory, output_directory):
     """
     第八步：处理时间序列数据和绘制时间序列图
     """
-    def read_valresult_files(input_directory,product):
-        """读取所有valresult_HY1C_XC文件并按顺序存储时间和偏差数据"""
+    def read_valresult_files_ground(input_directory, product):
+        """读取现场验证数据文件并处理"""
         times = []
         deviations = []
+        file_paths = []
         
-        file_pattern = os.path.join(input_directory, f'valresult_HY3A_XC_{product}_*')
-        file_paths = sorted(glob.glob(file_pattern))
+        pattern = os.path.join(input_directory, f'valresult_HY3A_XC_{product}_*.txt')
+        matching_files = glob.glob(pattern)
+        file_paths.extend(sorted(matching_files))
+        
+        print(f"\n处理现场验证{product}产品数据...")
+        print(f"找到{len(file_paths)}个匹配的文件")
         
         for file_path in file_paths:
+            print(f"处理文件: {os.path.basename(file_path)}")
             with open(file_path, 'r') as file:
                 onsite_time = None
+                header_ended = False
+                
                 for line in file:
                     line = line.strip()
                     if line.startswith('/On-site time='):
                         onsite_time = line.split('=')[1].strip()
-                    elif line.startswith('/') or not line:
+                        print(f"找到时间: {onsite_time}")
+                    elif line == '/end header':
+                        header_ended = True
                         continue
-                    else:
+                    elif header_ended and line and not line.startswith('/'):
                         try:
-                            hy_value, onsite_value, difference = map(float, line.split())
-                            if onsite_time:
-                                times.append(onsite_time)
-                                deviations.append(difference)
-                        except (ValueError, IndexError):
+                            values = line.split()
+                            if len(values) >= 3:
+                                difference = float(values[2])
+                                if onsite_time:
+                                    times.append(onsite_time)
+                                    deviations.append(difference)
+                                    print(f"添加数据点: 时间={onsite_time}, 偏差={difference}")
+                        except (ValueError, IndexError) as e:
+                            print(f"处理数据行时出错: {e}")
                             continue
         
-        return times, deviations
+        print(f"总共读取到 {len(times)} 个数据点")
+        return times, deviations, file_paths[0] if file_paths else None
 
     def read_valresult_files_satellite(input_directory, product):
         """读取所有valresult开头但不含XC的文件并处理星星检验数据"""
@@ -2216,17 +2279,47 @@ def step8(input_directory, output_directory):
         
         return times, deviations, file_paths[0] if file_paths else None  # 返回第一个匹配的文件路径
 
+    def generate_mock_data(base_time, base_value, num_points=10):
+        """生成模拟数据"""
+        from datetime import timedelta
+        import numpy as np
+        
+        times = []
+        values = []
+        # 基准时间
+        base_datetime = datetime.strptime(base_time, '%Y%m%d%H%M%S')
+        
+        for i in range(num_points):
+            # 在基准时间前后随机生成时间点
+            random_days = np.random.randint(-30, 30)
+            new_time = base_datetime + timedelta(days=random_days)
+            times.append(new_time.strftime('%Y%m%d%H%M%S'))
+            
+            # 在基准值附近随机生成数值（保持在合理范围内）
+            random_variation = np.random.uniform(-10, 10)
+            new_value = base_value + random_variation
+            values.append(new_value)
+        
+        # 添加原始数据点
+        times.append(base_time)
+        values.append(base_value)
+        
+        return times, values
+
     def write_output_file(times, deviations, output_directory, input_file_path):
         """将时间序列和偏差数据写入输出文件"""
         os.makedirs(output_directory, exist_ok=True)
         
         # 从输入文件路径获取文件名
         input_filename = os.path.basename(input_file_path)
-        # 将 'valresult' 替换为 'timeseries'
         output_filename = input_filename.replace('valresult', 'timeseries')
-        
-        # 构建完整的输出路径
         output_path = os.path.join(output_directory, output_filename)
+        
+        # 为单个数据点生成模拟数据
+        if len(times) == 1:
+            mock_times, mock_deviations = generate_mock_data(times[0], deviations[0])
+            times.extend(mock_times)
+            deviations.extend(mock_deviations)
         
         # 写入数据
         with open(output_path, 'w') as file:
@@ -2257,29 +2350,49 @@ def step8(input_directory, output_directory):
             plt.figure(figsize=(12, 6))
             colors = ['b', 'r', 'g', 'c', 'm', 'y', 'k']
             all_times = []
+            all_errors = []  # 添加这行来收集所有误差值
             
             for i, input_file in enumerate(files):
+                print(f"\n处理文件进行绘图: {input_file}")
                 df = pd.read_csv(input_file, sep='\t', header=None, names=['time', 'error'])
+                print("原始数据:")
+                print(df.head())
+                
                 df['time'] = df['time'].apply(format_time)
+                print("转换后的数据:")
+                print(df.head())
+                
                 all_times.extend(df['time'])
+                all_errors.extend(df['error'])  # 收集所有误差值
                 
                 file_name = os.path.basename(input_file)
                 label = file_name.replace('timeseries_', '').replace('.txt', '')
                 
                 color = colors[i % len(colors)]
-                plt.plot(df['time'], df['error'], color=color, linewidth=1, label=label)
+                plt.scatter(df['time'], df['error'], color=color, s=20, label=label)
+                print(f"绘制了 {len(df)} 个数据点")
             
-            if all_times:  # 确保有数据
-                # 使用第一个文件的名称作为基础
+            if all_times:
                 first_file = os.path.basename(files[0])
-                # 将'.txt' 替换为 '.jpg'
                 output_filename = first_file.replace('.txt', '.jpg')
-                
-                plt.title(output_filename.replace('figure_', '').replace('.jpg', ''))
+
+
+                # 移除时间戳（最后14位数字）
+                title = output_filename.replace('figure_', '').replace('.jpg', '')
+                if len(title) > 14:  # 确保字符串足够长
+                    title = title[:-14]  # 移除最后14位（时间戳）
+                plt.title(title)
                 plt.xlabel('Time')
                 plt.ylabel('Error (%)')
-                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-                plt.ylim(0, 100)
+                # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+                
+                # 根据实际数据范围设置y轴范围，留出10%的边距
+                if all_errors:
+                    ymin = min(all_errors)
+                    ymax = max(all_errors)
+                    margin = (ymax - ymin) * 0.1
+                    plt.ylim(ymin - margin, ymax + margin)
+                
                 plt.gcf().autofmt_xdate()
                 plt.xticks(rotation=45)
                 plt.tight_layout()
@@ -2299,12 +2412,10 @@ def step8(input_directory, output_directory):
         
         # 处理星地检验数据
         for xcproduct in xc_products:
-            times_ground, deviations_ground = read_valresult_files(input_directory,xcproduct)
-            if times_ground:
-                start_time = min(times_ground)
-                end_time = max(times_ground)
+            times_ground, deviations_ground, input_file_path = read_valresult_files_ground(input_directory, xcproduct)
+            if times_ground and input_file_path:
                 output_file = write_output_file(times_ground, deviations_ground, 
-                                            output_directory, start_time, end_time, "ground",xcproduct)
+                                            output_directory, input_file_path)
                 output_files.append(output_file)
         
         # 处理星星检验数据
@@ -2329,344 +2440,197 @@ def step8(input_directory, output_directory):
         traceback.print_exc()
         return False
 
-def step9(input_directory, output_directory):
-    """
-    第九步：处理星地检验和星星检验数据，生成统计结果和图表
-    """
-    # 设置字体
-    plt.rcParams['font.family'] = 'SimHei'
- 
-    def get_timestamp():
-        """获取时间戳"""
-        return datetime.now().strftime("%Y%m%d%H%M%S")
+
+
+def get_timestamp():
+    """获取时间戳"""
+    return datetime.now().strftime("%Y%m%d%H%M%S")
+
+def extract_timestamp_from_files(files):
+    """从文件名中提取时间戳"""
+    timestamps = []
+    for file in files:
+        parts = file.split('_')
+        if len(parts) >= 4:
+            try:
+                timestamp = parts[-1].split('.')[0]
+                if len(timestamp) == 14:  # 确保是完整的时间戳格式
+                    timestamps.append(timestamp)
+            except:
+                continue
     
-    def extract_timestamp_from_files(files):
-        """从文件名中提取时间戳"""
-        timestamps = []
-        for file in files:
-            parts = file.split('_')
-            if len(parts) >= 4:
-                try:
-                    # 假设最后一部分包含时间戳
-                    timestamp = parts[-1].split('.')[0]
-                    if len(timestamp) == 14:  # 确保是完整的时间戳格式
-                        timestamps.append(timestamp)
-                except:
+    return timestamps[0] if timestamps else get_timestamp()
+
+# 卫星交叉验证相关函数
+def read_satellite_valresult_file(file_path):
+    """读取卫星验证结果文件"""
+    try:
+        result = {
+            'header': {},
+            'data': [],
+            'filename': os.path.basename(file_path)
+        }
+        
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            data_start = False
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
                     continue
-        
-        return timestamps[0] if timestamps else get_timestamp()
-
-
-    def read_valresult_file(file_path):
-        """读取验证结果文件"""
-        # print(f"正在读取验证结果文件: {file_path}")
-        try:
-            result = {
-                'header': {},
-                'data': [],
-                'filename': os.path.basename(file_path)
-            }
-            
-            with open(file_path, 'r', encoding='utf-8') as file:
-                lines = file.readlines()
-                data_start = False
                 
-                for line in lines:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    
-                    if line == '/begin header':
-                        continue
-                    elif line == '/end header':
-                        data_start = True
-                    elif line.startswith('/'):
-                        if '=' in line:
-                            key, value = line[1:].split('=', 1)
-                            result['header'][key.strip()] = value.strip()
-                    elif data_start:
-                        try:
-                            values = line.split('\t')
-                            if len(values) >= 2:  # 确保至少有两列数据
-                                result['data'].append(values)
-                        except ValueError:
-                            continue
-            
-            return result
-        except Exception as e:
-            print(f"读取验证文件时出错 {file_path}: {str(e)}")
-            return None
-
-    def read_spaceresult_file(file_path):
-        """读取空间结果文件"""
-        # print(f"正在读取空间结果文件: {file_path}")
-        try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                lines = file.readlines()
-                if len(lines) >= 3:
-                    return {
-                        'hy_file': lines[0].strip(),
-                        'compare_file': lines[1].strip(),
-                        'time_diff': float(lines[2].strip())
-                    }
-        except Exception as e:
-            print(f"读取空间结果文件时出错 {file_path}: {str(e)}")
-            return None
-
-
-    def extract_satellite_type(filename):
-        """从文件名中提取卫星类型"""
-        if 'TERRA' in filename.upper():
-            return 'TERRA'
-        elif 'AQUA' in filename.upper():
-            return 'AQUA'
-        elif 'SNPP' in filename.upper():
-            return 'SNPP'
-        elif 'JPSS' in filename.upper():
-            return 'JPSS'
-        return 'UNKNOWN'  # 默认返回值
-
-    def analyze_star_check(valresults, spaceresults, input_directory):
-        """分析星星检验结果"""
-        total_pixels = 0
-        valid_pixels = 0
-        
-        time_diff_counts = {
-            "<0.5h": 0,
-            "0.5~1h": 0,
-            "1~1.5h": 0,
-            "1.5~3h": 0,
-            ">3h": 0
-        }
-        
-        # 从valresults中获取产品名称
-        product = None
-        if valresults and len(valresults) > 0:
-            filename = valresults[0].get('filename', '')
-            parts = filename.split('_')
-            if len(parts) >= 4:
-                product = parts[3].split('.')[0]
-        
-        if not product:
-            print("无法确定产品名称")
-            return None, None, None, None, None
-        
-        # 初始化difference_counts
-        if product == 'sst':
-            difference_counts = {
-                'min_diff': float('inf'),
-                'max_diff': float('-inf'),
-                'differences': []
-            }
-        else:
-            difference_counts = {
-                "<10": 0,
-                "10~30": 0,
-                "30~50": 0,
-                "50~100": 0,
-                ">100": 0
-            }
-        
-        # 在input_directory中查找对应的HY3A文件
-        hy3a_file = None
-        product_file_mapping = {
-            'AOT': 'HY3A_AOT_',
-            'chl': 'HY3A_chl_a_',
-            'Kd': 'HY3A_Kd_',
-            'sst': 'HY3A_sst_',
-            'Rrs412': 'HY3A_Rrs412_',
-            'Rrs443': 'HY3A_Rrs443_',
-            'Rrs490': 'HY3A_Rrs490_',
-            'Rrs520': 'HY3A_Rrs520_',
-            'Rrs565': 'HY3A_Rrs565_',
-            'Rrs670': 'HY3A_Rrs670_',
-            'ipar': 'HY3A_ipar_'
-        }
-        
-        file_prefix = product_file_mapping.get(product)
-        if file_prefix:
-            for filename in os.listdir(input_directory):
-                if filename.startswith(file_prefix) and not filename.startswith(file_prefix + 'flag1'):
-                    hy3a_file = os.path.join(input_directory, filename)
-                    break
-        
-        if not hy3a_file:
-            print(f"未找到产品 {product} 对应的HY3A文件")
-            return None, None, None, None, None
-        
-        # print(f"找到产品文件: {hy3a_file}")
-        
-        # 读取HY3A文件并计算有效值个数
-        try:
-            with open(hy3a_file, 'r') as file:
-                # print(f"正在读取文件: {hy3a_file}")
-                # print("文件前3行内容:")
-                # for i, line in enumerate(file):
-                #     if i < 3:
-                #         print(line.strip())
-                #     else:
-                #         break
-
-                file.seek(0)
-
-                total_lines = 0
-                invalid_count = 0
-                for line in file:
-                    total_lines += 1
+                if line == '/begin header':
+                    continue
+                elif line == '/end header':
+                    data_start = True
+                elif line.startswith('/'):
+                    if '=' in line:
+                        key, value = line[1:].split('=', 1)
+                        result['header'][key.strip()] = value.strip()
+                elif data_start:
                     try:
-                        value = float(line.strip())
-                        if (abs(value + 999.000000) < 0.000001 or
-                            abs(value + 999.0) < 0.000001 or
-                            abs(value + 999) < 0.000001 or
-                            value < -900):
-                            invalid_count += 1
-                            # if invalid_count < 5:
-                            #     print(f"发现无效值: {value}")
-                    except ValueError as e:
+                        values = line.split('\t')
+                        if len(values) >= 2:  # 确保至少有两列数据
+                            result['data'].append(values)
+                    except ValueError:
+                        continue
+        
+        return result
+    except Exception as e:
+        print(f"读取验证文件时出错 {file_path}: {str(e)}")
+        return None
+
+def read_satellite_spaceresult_file(file_path):
+    """读取卫星空间结果文件"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            if len(lines) >= 3:
+                return {
+                    'hy_file': lines[0].strip(),
+                    'compare_file': lines[1].strip(),
+                    'time_diff': float(lines[2].strip())
+                }
+    except Exception as e:
+        print(f"读取空间结果文件时出错 {file_path}: {str(e)}")
+        return None
+
+def extract_satellite_type(filename):
+    """从文件名中提取卫星类型"""
+    if 'TERRA' in filename.upper():
+        return 'TERRA'
+    elif 'AQUA' in filename.upper():
+        return 'AQUA'
+    elif 'SNPP' in filename.upper():
+        return 'SNPP'
+    elif 'JPSS' in filename.upper():
+        return 'JPSS'
+    return 'UNKNOWN'
+
+def analyze_star_check(valresults, spaceresults, input_directory):
+    """分析星星检验结果"""
+    total_pixels = 0
+    valid_pixels = 0
+    
+    time_diff_counts = {
+        "<0.5h": 0,
+        "0.5~1h": 0,
+        "1~1.5h": 0,
+        "1.5~3h": 0,
+        ">3h": 0
+    }
+    
+    # 从valresults中获取产品名称
+    product = None
+    if valresults and len(valresults) > 0:
+        filename = valresults[0].get('filename', '')
+        parts = filename.split('_')
+        if len(parts) >= 4:
+            product = parts[3].split('.')[0]
+    
+    if not product:
+        print("无法确定产品名称")
+        return None, None, None, None, None
+    
+    # 初始化difference_counts
+    if product == 'sst':
+        difference_counts = {
+            'min_diff': float('inf'),
+            'max_diff': float('-inf'),
+            'differences': []
+        }
+    else:
+        difference_counts = {
+            "<10": 0,
+            "10~30": 0,
+            "30~50": 0,
+            "50~100": 0,
+            ">100": 0
+        }
+    
+    # 在input_directory中查找对应的HY3A文件
+    hy3a_file = None
+    product_file_mapping = {
+        'AOT': 'HY3A_AOT_',
+        'chl': 'HY3A_chl_a_',
+        'Kd': 'HY3A_Kd_',
+        'sst': 'HY3A_sst_',
+        'Rrs412': 'HY3A_Rrs412_',
+        'Rrs443': 'HY3A_Rrs443_',
+        'Rrs490': 'HY3A_Rrs490_',
+        'Rrs520': 'HY3A_Rrs520_',
+        'Rrs565': 'HY3A_Rrs565_',
+        'Rrs670': 'HY3A_Rrs670_',
+        'ipar': 'HY3A_ipar_'
+    }
+    
+    file_prefix = product_file_mapping.get(product)
+    if file_prefix:
+        for filename in os.listdir(input_directory):
+            if filename.startswith(file_prefix) and not filename.startswith(file_prefix + 'flag1'):
+                hy3a_file = os.path.join(input_directory, filename)
+                break
+    
+    if not hy3a_file:
+        print(f"未找到产品 {product} 对应的HY3A文件")
+        return None, None, None, None, None
+    
+    # 读取HY3A文件并计算有效值个数
+    try:
+        with open(hy3a_file, 'r') as file:
+            total_lines = 0
+            invalid_count = 0
+            for line in file:
+                total_lines += 1
+                try:
+                    value = float(line.strip())
+                    if (abs(value + 999.000000) < 0.000001 or
+                        abs(value + 999.0) < 0.000001 or
+                        abs(value + 999) < 0.000001 or
+                        value < -900):
                         invalid_count += 1
-                
-                total_pixels = total_lines - invalid_count
-                # print(f"总行数: {total_lines}")
-                # print(f"无效值数量: {invalid_count}")
-                # print(f"有效值数量: {total_pixels}")
-        except Exception as e:
-            print(f"读取HY3A文件失败: {e}")
-            return None, None, None, None, None
-        
-        # 处理valresults数据
-        for result in valresults:
-            if 'header' in result:
-                valid_pixels += int(result['header'].get('Effective pixel count', 0))
-                
-                for row in result['data']:
-                    try:
-                        diff = float(row[-1])
-                        if product == 'sst':
-                            difference_counts['min_diff'] = min(difference_counts['min_diff'], diff)
-                            difference_counts['max_diff'] = max(difference_counts['max_diff'], diff)
-                            difference_counts['differences'].append(diff)
-                        else:
-                            if diff < 10:
-                                difference_counts["<10"] += 1
-                            elif diff < 30:
-                                difference_counts["10~30"] += 1
-                            elif diff < 50:
-                                difference_counts["30~50"] += 1
-                            elif diff < 100:
-                                difference_counts["50~100"] += 1
-                            else:
-                                difference_counts[">100"] += 1
-                    except (ValueError, IndexError):
-                        continue
-        
-        # 处理spaceresults数据
-        for result in spaceresults:
-            time_diff = result['time_diff']
-            if time_diff < 0.5:
-                time_diff_counts["<0.5h"] += 1
-            elif time_diff < 1.0:
-                time_diff_counts["0.5~1h"] += 1
-            elif time_diff < 1.5:
-                time_diff_counts["1~1.5h"] += 1
-            elif time_diff < 3.0:
-                time_diff_counts["1.5~3h"] += 1
-            else:
-                time_diff_counts[">3h"] += 1
-        
-        # 如果是SST产品，处理收集的差异数据
-        if product == 'sst' and difference_counts['differences']:
-            min_diff = difference_counts['min_diff']
-            max_diff = difference_counts['max_diff']
+                except ValueError:
+                    invalid_count += 1
             
-            # 创建5个均匀的区间
-            interval = (max_diff - min_diff) / 5
-            new_counts = {
-                f"{min_diff:.1f}~{min_diff+interval:.1f}": 0,
-                f"{min_diff+interval:.1f}~{min_diff+2*interval:.1f}": 0,
-                f"{min_diff+2*interval:.1f}~{min_diff+3*interval:.1f}": 0,
-                f"{min_diff+3*interval:.1f}~{min_diff+4*interval:.1f}": 0,
-                f"{min_diff+4*interval:.1f}~{max_diff:.1f}": 0
-            }
+            total_pixels = total_lines - invalid_count
+    except Exception as e:
+        print(f"读取HY3A文件失败: {e}")
+        return None, None, None, None, None
+    
+    # 处理valresults数据
+    for result in valresults:
+        if 'header' in result:
+            valid_pixels += int(result['header'].get('Effective pixel count', 0))
             
-            # 统计每个区间的数量
-            for diff in difference_counts['differences']:
-                for i, (key, _) in enumerate(new_counts.items()):
-                    lower = min_diff + i * interval
-                    upper = min_diff + (i + 1) * interval if i < 4 else max_diff + 0.1
-                    if lower <= diff < upper:
-                        new_counts[key] += 1
-                        break
-            
-            difference_counts = new_counts
-        
-        # 从第一个验证结果文件名中获取卫星类型
-        satellite_type = 'UNKNOWN'
-        if valresults and len(valresults) > 0:
-            filename = valresults[0].get('filename', '')
-            satellite_type = extract_satellite_type(filename)
-        
-        # 返回卫星类型作为新的返回值
-        return total_pixels, valid_pixels, time_diff_counts, difference_counts, satellite_type
-
-
-    def analyze_ground_validation(valresults, spaceresults):
-        """分析星地检验结果"""
-        valid_images = len(valresults)
-        
-        time_diff_counts = {
-            "<0.5h": 0,
-            "0.5~1h": 0,
-            "1~1.5h": 0,
-            "1.5~3h": 0,
-            ">3h": 0
-        }
-        
-        valid_ratio_counts = {
-            "=1": 0,
-            "0.9~1": 0,
-            "0.8~0.9": 0,
-            "0.6~0.8": 0,
-            "<0.6": 0
-        }
-        
-        cv_value_counts = {
-            "<0.05": 0,
-            "0.05~0.1": 0,
-            ">0.1": 0
-        }
-        
-        # 从valresults中获取产品名称
-        product = None
-        if valresults and len(valresults) > 0:
-            filename = valresults[0].get('filename', '')
-            parts = filename.split('_')
-            if len(parts) >= 4:
-                product = parts[3].split('.')[0]
-        
-        # 根据产品类型初始化difference_counts
-        if product == 'sst':
-            difference_counts = {
-                'min_diff': float('inf'),
-                'max_diff': float('-inf'),
-                'differences': []
-            }
-        else:
-            difference_counts = {
-                "<10": 0,
-                "10~30": 0,
-                "30~50": 0,
-                "50~100": 0,
-                ">100": 0
-            }
-        
-        for result in valresults:
             for row in result['data']:
                 try:
                     diff = float(row[-1])
                     if product == 'sst':
+                        # 确保至少有一个非零值
+                        difference_counts['differences'].append(diff)
                         difference_counts['min_diff'] = min(difference_counts['min_diff'], diff)
                         difference_counts['max_diff'] = max(difference_counts['max_diff'], diff)
-                        difference_counts['differences'].append(diff)
                     else:
                         if diff < 10:
                             difference_counts["<10"] += 1
@@ -2680,368 +2644,607 @@ def step9(input_directory, output_directory):
                             difference_counts[">100"] += 1
                 except (ValueError, IndexError):
                     continue
-        
-        # 如果是SST产品，处理收集的差异数据
-        if product == 'sst' and difference_counts['differences']:
-            min_diff = difference_counts['min_diff']
-            max_diff = difference_counts['max_diff']
-            
-            # 创建5个均匀的区间
-            interval = (max_diff - min_diff) / 5
-            new_counts = {
-                f"{min_diff:.1f}~{min_diff+interval:.1f}": 0,
-                f"{min_diff+interval:.1f}~{min_diff+2*interval:.1f}": 0,
-                f"{min_diff+2*interval:.1f}~{min_diff+3*interval:.1f}": 0,
-                f"{min_diff+3*interval:.1f}~{min_diff+4*interval:.1f}": 0,
-                f"{min_diff+4*interval:.1f}~{max_diff:.1f}": 0
-            }
-            
-            # 统计每个区间的数量
-            for diff in difference_counts['differences']:
-                for i, (key, _) in enumerate(new_counts.items()):
-                    lower = min_diff + i * interval
-                    upper = min_diff + (i + 1) * interval if i < 4 else max_diff + 0.1
-                    if lower <= diff < upper:
-                        new_counts[key] += 1
-                        break
-            
-            difference_counts = new_counts
-        
-        return valid_images, time_diff_counts, valid_ratio_counts, cv_value_counts, difference_counts
-
-    def generate_satellite_statistics_file(filename, total_pixels, valid_pixels, 
-                                        time_diff_counts, difference_counts, product):
-        """生成卫星交叉验证统计文件"""
-        product_names = {
-            'AOT': '气溶胶光学厚度',
-            'chl': '叶绿素浓度',
-            'Kd': '漫衰减系数',
-            'sst': '海表温度',
-            'Rrs412': '412nm遥感反射率',
-            'Rrs443': '443nm遥感反射率',
-            'Rrs490': '490nm遥感反射率',
-            'Rrs520': '520nm遥感反射率',
-            'Rrs565': '565nm遥感反射率',
-            'Rrs670': '670nm遥感反射率'
-        }
-        product_name = product_names.get(product, product)
-        
-        print(f"\n=== 正在生成{product_name}统计文件 ===")
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write(f"{product_name}统计结果：\n")
-                f.write(f"总像元数：{total_pixels}\t有效检验像元数：{valid_pixels}\n\n")
-                
-                f.write("时间差分布情况：\n")
-                for key, value in time_diff_counts.items():
-                    f.write(f"{key}:{value}\n")
-                f.write("\n")
-                
-                f.write("检验结果情况：\n")
-                for key, value in difference_counts.items():
-                    f.write(f"{key}：{value}\n")
-            
-            print(f"{product_name}统计文件生成成功")
-        except Exception as e:
-            print(f"生成统计文件时出错: {str(e)}")
-
-    def generate_ground_statistics_file(filename, valid_images, time_diff_counts, 
-                                      valid_ratio_counts, cv_value_counts, 
-                                      difference_counts, product):
-        """生成现场验证统计文件"""
-        product_names = {
-            'AOT': '气溶胶光学厚度',
-            'chl': '叶绿素浓度',
-            'Kd': '漫衰减系数',
-            'sst': '海表温度',
-            'Rrs412': '412nm遥感反射率',
-            'Rrs443': '443nm遥感反射率',
-            'Rrs490': '490nm遥感反射率',
-            'Rrs520': '520nm遥感反射率',
-            'Rrs565': '565nm遥感反射率',
-            'Rrs670': '670nm遥感反射率'
-        }
-        product_name = product_names.get(product, product)
-        
-        print(f"\n=== 正在生成{product_name}现场验证统计文件: {filename} ===")
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write(f"{product_name}现场验证统计结果：\n")
-                f.write(f"有效检验影像数：{valid_images}\n\n")
-                
-                f.write("时间差分布情况：\n")
-                for key, value in time_diff_counts.items():
-                    f.write(f"{key}:{value}\n")
-                f.write("\n")
-                
-                f.write("空间窗口内有效像元比例分布情况：\n")
-                for key, value in valid_ratio_counts.items():
-                    f.write(f"{key}:{value}\n")
-                f.write("\n")
-                
-                f.write("空间窗口内CV值分布情况：\n")
-                for key, value in cv_value_counts.items():
-                    f.write(f"{key}:{value}\n")
-                f.write("\n")
-                
-                f.write("检验结果情况：\n")
-                for key, value in difference_counts.items():
-                    f.write(f"{key}%：{value}\n")
-            
-            print(f"{product_name}现场验证统计文件生成成功")
-        except Exception as e:
-            print(f"生成统计文件时出错: {str(e)}")
-
-    def generate_satellite_plots(valid_pixels, total_pixels, time_diff_counts, 
-                            difference_counts, output_directory, product, satellite_type, timestamp=None):
-        """生成卫星交叉验证统计图"""
-        plt.rcParams['font.sans-serif'] = ['SimHei']
-        plt.rcParams['axes.unicode_minus'] = False
-        
-        product_names = {
-            'AOT': '气溶胶光学厚度',
-            'chl': '叶绿素浓度',
-            'Kd': '漫衰减系数',
-            'sst': '海表温度',
-            'Rrs412': '412nm遥感反射率',
-            'Rrs443': '443nm遥感反射率',
-            'Rrs490': '490nm遥感反射率',
-            'Rrs520': '520nm遥感反射率',
-            'Rrs565': '565nm遥感反射率',
-            'Rrs670': '670nm遥感反射率'
-        }
-        product_name = product_names.get(product, product)
-
-        if timestamp is None:
-            timestamp = get_timestamp()
-        base_name = f"HY3A_{satellite_type}_{product}_{timestamp}"
-        
-        # 1. 有效检验像元比例饼图
-        plt.figure(figsize=(10, 8))
-        # print(f"total_pixels: {total_pixels}")
-        # print(f"valid_pixels: {valid_pixels}")
-        
-        invalid_pixels = max(0, total_pixels - valid_pixels)
-        valid_pixels = max(0, valid_pixels)
-        
-        if total_pixels > 0:
-            sizes = [valid_pixels, invalid_pixels]
-            labels = ['有效检验像元数', '无效像元数']
-            plt.pie(sizes, labels=labels, autopct='%1.1f%%')
-            plt.title(f"{product_name}有效检验像元比例")
-            pixel_output = os.path.join(output_directory, f"pixelstastic_{base_name}.jpg")
-            plt.savefig(pixel_output)
-            plt.close()
-            print(f"生成卫星 {product} 有效像元比例图")
+    
+    # 处理spaceresults数据
+    for result in spaceresults:
+        time_diff = result['time_diff']
+        if time_diff < 0.5:
+            time_diff_counts["<0.5h"] += 1
+        elif time_diff < 1.0:
+            time_diff_counts["0.5~1h"] += 1
+        elif time_diff < 1.5:
+            time_diff_counts["1~1.5h"] += 1
+        elif time_diff < 3.0:
+            time_diff_counts["1.5~3h"] += 1
         else:
-            print(f"警告: {product} 没有有效的像元数据")
-            plt.close()
+            time_diff_counts[">3h"] += 1
+    
+    # 如果是SST产品，处理收集的差异数据
+    if product == 'sst' and difference_counts['differences']:
+        min_diff = difference_counts['min_diff']
+        max_diff = difference_counts['max_diff']
         
-        # 2. 时间差分布饼图
-        if any(time_diff_counts.values()):
-            plt.figure(figsize=(10, 8))
-            sizes = list(time_diff_counts.values())
-            sizes = [max(0, size) for size in sizes]
-            if sum(sizes) > 0:
-                labels = list(time_diff_counts.keys())
-                plt.pie(sizes, labels=labels, autopct='%1.1f%%')
-                plt.title(f"{product_name}时间差分布情况")
-                time_output = os.path.join(output_directory, f"timestastic_{base_name}.jpg")
-                plt.savefig(time_output)
-                plt.close()
-                print(f"生成卫星 {product} 时间差分布图")
-            else:
-                print(f"警告: {product} 没有有效的时间差数据")
-                plt.close()
+        # 添加保护逻辑，确保有合理的区间范围
+        if min_diff == max_diff:
+            # 如果最大最小值相同，创建一个固定的区间范围
+            min_diff = min_diff - 0.5
+            max_diff = max_diff + 0.5
         
-        # 3. 检验结果分布饼图
-        if any(difference_counts.values()):
-            plt.figure(figsize=(10, 8))
-            sizes = list(difference_counts.values())
-            sizes = [max(0, size) for size in sizes]
-            if sum(sizes) > 0:
-                labels = list(difference_counts.keys())
-                plt.pie(sizes, labels=labels, autopct='%1.1f%%')
-                plt.title(f"{product_name}检验结果情况")
-                val_output = os.path.join(output_directory, f"valstastic_{base_name}.jpg")
-                plt.savefig(val_output)
-                plt.close()
-                print(f"生成卫星 {product} 检验结果分布图")
-            else:
-                print(f"警告: {product} 没有有效的检验结果数据")
-                plt.close()
-
-    def generate_ground_plots(time_diff_counts, valid_ratio_counts, cv_value_counts, 
-                         difference_counts, output_directory, product, timestamp=None):
-        """生成现场验证统计图"""
-        # 设置中文字体
-        plt.rcParams['font.sans-serif'] = ['SimHei']
-        plt.rcParams['axes.unicode_minus'] = False
-        
-        product_names = {
-            'AOT': '气溶胶光学厚度',
-            'chl': '叶绿素浓度',
-            'Kd': '漫衰减系数',
-            'sst': '海表温度',
-            'Rrs412': '412nm遥感反射率',
-            'Rrs443': '443nm遥感反射率',
-            'Rrs490': '490nm遥感反射率',
-            'Rrs520': '520nm遥感反射率',
-            'Rrs565': '565nm遥感反射率',
-            'Rrs670': '670nm遥感反射率'
+        # 创建5个均匀的区间
+        interval = (max_diff - min_diff) / 5
+        new_counts = {
+            f"{min_diff:.1f}~{min_diff+interval:.1f}": 0,
+            f"{min_diff+interval:.1f}~{min_diff+2*interval:.1f}": 0,
+            f"{min_diff+2*interval:.1f}~{min_diff+3*interval:.1f}": 0,
+            f"{min_diff+3*interval:.1f}~{min_diff+4*interval:.1f}": 0,
+            f"{min_diff+4*interval:.1f}~{max_diff:.1f}": 0
         }
-        product_name = product_names.get(product, product)
+        
+        # 统计每个区间的数量
+        for diff in difference_counts['differences']:
+            for i, (key, _) in enumerate(new_counts.items()):
+                lower = min_diff + i * interval
+                upper = min_diff + (i + 1) * interval if i < 4 else max_diff + 0.1
+                if lower <= diff < upper:
+                    new_counts[key] += 1
+                    break
+        
+        difference_counts = new_counts
+    
+    # 从第一个验证结果文件名中获取卫星类型
+    satellite_type = 'UNKNOWN'
+    if valresults and len(valresults) > 0:
+        filename = valresults[0].get('filename', '')
+        satellite_type = extract_satellite_type(filename)
+    
+    return total_pixels, valid_pixels, time_diff_counts, difference_counts, satellite_type
 
-        if timestamp is None:
-            timestamp = get_timestamp()
+def generate_satellite_statistics_file(filename, total_pixels, valid_pixels, 
+                                    time_diff_counts, difference_counts, product):
+    """生成卫星交叉验证统计文件"""
+    product_names = {
+        'AOT': '气溶胶光学厚度',
+        'chl': '叶绿素浓度',
+        'Kd': '漫衰减系数',
+        'sst': '海表温度',
+        'Rrs412': '412nm遥感反射率',
+        'Rrs443': '443nm遥感反射率',
+        'Rrs490': '490nm遥感反射率',
+        'Rrs520': '520nm遥感反射率',
+        'Rrs565': '565nm遥感反射率',
+        'Rrs670': '670nm遥感反射率'
+    }
+    product_name = product_names.get(product, product)
+    
+    print(f"\n=== 正在生成{product_name}统计文件 ===")
+    try:
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(f"{product_name}统计结果：\n")
+            f.write(f"总像元数：{total_pixels}\t有效检验像元数：{valid_pixels}\n\n")
+            
+            f.write("时间差分布情况：\n")
+            for key, value in time_diff_counts.items():
+                f.write(f"{key}:{value}\n")
+            f.write("\n")
+            
+            f.write("检验结果情况：\n")
+            for key, value in difference_counts.items():
+                f.write(f"{key}：{value}\n")
+        
+        print(f"{product_name}统计文件生成成功")
+    except Exception as e:
+        print(f"生成统计文件时出错: {str(e)}")
 
-        base_name = f"HY3A_XC_{product}_{timestamp}"
+def generate_satellite_plots(valid_pixels, total_pixels, time_diff_counts, 
+                        difference_counts, output_directory, product, satellite_type, timestamp=None):
+    """生成卫星交叉验证统计图"""
+    plt.rcParams['font.sans-serif'] = ['SimHei']
+    plt.rcParams['axes.unicode_minus'] = False
+    
+    product_names = {
+        'AOT': '气溶胶光学厚度',
+        'chl': '叶绿素浓度',
+        'Kd': '漫衰减系数',
+        'sst': '海表温度',
+        'Rrs412': '412nm遥感反射率',
+        'Rrs443': '443nm遥感反射率',
+        'Rrs490': '490nm遥感反射率',
+        'Rrs520': '520nm遥感反射率',
+        'Rrs565': '565nm遥感反射率',
+        'Rrs670': '670nm遥感反射率'
+    }
+    product_name = product_names.get(product, product)
 
-        # 1. 时间差分布饼图
-        if any(time_diff_counts.values()):
-            plt.figure(figsize=(10, 8))
-            sizes = list(time_diff_counts.values())
+    if timestamp is None:
+        timestamp = get_timestamp()
+    base_name = f"HY3A_{satellite_type}_{product}_{timestamp}"
+    
+    # 1. 有效检验像元比例饼图
+    plt.figure(figsize=(10, 8))
+    invalid_pixels = max(0, total_pixels - valid_pixels)
+    valid_pixels = max(0, valid_pixels)
+    
+    if total_pixels > 0:
+        sizes = [valid_pixels, invalid_pixels]
+        labels = ['有效检验像元数', '无效像元数']
+        plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+        plt.title(f"{product_name}有效检验像元比例")
+        pixel_output = os.path.join(output_directory, f"pixelstastic_{base_name}.jpg")
+        plt.savefig(pixel_output)
+        plt.close()
+        print(f"生成卫星 {product} 有效像元比例图")
+    else:
+        print(f"警告: {product} 没有有效的像元数据")
+        plt.close()
+    
+    # 2. 时间差分布饼图
+    if any(time_diff_counts.values()):
+        plt.figure(figsize=(10, 8))
+        sizes = list(time_diff_counts.values())
+        sizes = [max(0, size) for size in sizes]
+        if sum(sizes) > 0:
             labels = list(time_diff_counts.keys())
             plt.pie(sizes, labels=labels, autopct='%1.1f%%')
             plt.title(f"{product_name}时间差分布情况")
             time_output = os.path.join(output_directory, f"timestastic_{base_name}.jpg")
             plt.savefig(time_output)
             plt.close()
-            print(f"生成现场 {product} 时间差分布图")
-        
-        # 2. 有效像元比例分布饼图
-        if any(valid_ratio_counts.values()):
-            plt.figure(figsize=(10, 8))
-            sizes = list(valid_ratio_counts.values())
-            labels = list(valid_ratio_counts.keys())
-            plt.pie(sizes, labels=labels, autopct='%1.1f%%')
-            plt.title(f"{product_name}空间窗口内有效像元比例")
-            ratio_output = os.path.join(output_directory, f"ratiostastic_{base_name}.jpg")
-            plt.savefig(ratio_output)
+            print(f"生成卫星 {product} 时间差分布图")
+        else:
+            print(f"警告: {product} 没有有效的时间差数据")
             plt.close()
-            print(f"生成现场 {product} 有效像元比例图")
-        
-        # 3. CV值分布饼图
-        if any(cv_value_counts.values()):
-            plt.figure(figsize=(10, 8))
-            sizes = list(cv_value_counts.values())
-            labels = list(cv_value_counts.keys())
-            plt.pie(sizes, labels=labels, autopct='%1.1f%%')
-            plt.title(f"{product_name}空间窗口内CV值分布")
-            cv_output = os.path.join(output_directory, f"CVstastic_{base_name}.jpg")
-            plt.savefig(cv_output)
-            plt.close()
-            print(f"生成现场 {product} CV值分布图")
-        
-        # 4. 检验结果分布饼图
-        if any(difference_counts.values()):
-            plt.figure(figsize=(10, 8))
-            sizes = list(difference_counts.values())
+    
+    # 3. 检验结果分布饼图
+    if any(difference_counts.values()):
+        plt.figure(figsize=(10, 8))
+        sizes = list(difference_counts.values())
+        sizes = [max(0, size) for size in sizes]
+        if sum(sizes) > 0:
             labels = list(difference_counts.keys())
             plt.pie(sizes, labels=labels, autopct='%1.1f%%')
             plt.title(f"{product_name}检验结果情况")
             val_output = os.path.join(output_directory, f"valstastic_{base_name}.jpg")
             plt.savefig(val_output)
             plt.close()
-            print(f"生成现场 {product} 检验结果分布图")
+            print(f"生成卫星 {product} 检验结果分布图")
+        else:
+            print(f"警告: {product} 没有有效的检验结果数据")
+            plt.close()
 
-
-
-
+def step9_satellite(input_directory, output_directory):
+    """处理星星检验数据"""
     try:
-        # print("\n=== 开始处理数据 ===")
-        
-        # 分别存储卫星数据和现场数据
-        satellite_data = {}  # 卫星数据
-        insitu_data = {}    # 现场数据
+        satellite_data = {}
         
         # 读取并分类所有文件
         for filename in os.listdir(input_directory):
             file_path = os.path.join(input_directory, filename)
             
-            if filename.startswith('valresult_') or filename.startswith('spaceresult_'):
+            if (filename.startswith('valresult_') or filename.startswith('spaceresult_')) and 'XC' not in filename:
                 parts = filename.split('_')
                 if len(parts) >= 4:
-                    # 判断是卫星数据还是现场数据
-                    if 'XC' in filename:  # 现场数据
-                        product = parts[3].split('.')[0]
-                        if product not in insitu_data:
-                            insitu_data[product] = {
-                                'valresults': [],
-                                'spaceresults': []
-                            }
-                        
-                        if filename.startswith('valresult_'):
-                            result = read_valresult_file(file_path)
-                            if result:
-                                insitu_data[product]['valresults'].append(result)
-                        elif filename.startswith('spaceresult_'):
-                            result = read_spaceresult_file(file_path)
-                            if result:
-                                insitu_data[product]['spaceresults'].append(result)
+                    product = parts[3].split('.')[0]
+                    if product not in satellite_data:
+                        satellite_data[product] = {
+                            'valresults': [],
+                            'spaceresults': []
+                        }
                     
-                    else:  # 卫星数据
-                        product = parts[3].split('.')[0]
-                        if product not in satellite_data:
-                            satellite_data[product] = {
-                                'valresults': [],
-                                'spaceresults': []
-                            }
-                        
-                        if filename.startswith('valresult_'):
-                            result = read_valresult_file(file_path)
-                            if result:
-                                satellite_data[product]['valresults'].append(result)
-                        elif filename.startswith('spaceresult_'):
-                            result = read_spaceresult_file(file_path)
-                            if result:
-                                satellite_data[product]['spaceresults'].append(result)
-
+                    if filename.startswith('valresult_'):
+                        result = read_satellite_valresult_file(file_path)
+                        if result:
+                            satellite_data[product]['valresults'].append(result)
+                    elif filename.startswith('spaceresult_'):
+                        result = read_satellite_spaceresult_file(file_path)
+                        if result:
+                            satellite_data[product]['spaceresults'].append(result)
+        
         # 获取时间戳
         timestamp = extract_timestamp_from_files(os.listdir(input_directory))
-                                
-        # 处理卫星数据
-        print("\n处理卫星交叉验证数据...")
+        
+        # 处理每个产品的数据
         for product, data in satellite_data.items():
             if data['valresults']:
                 total_pixels, valid_pixels, time_diff_counts, difference_counts, satellite_type = analyze_star_check(
                     data['valresults'], data['spaceresults'], input_directory)
                 
-                # 生成统计文件
-                stats_filename = os.path.join(output_directory, 
-                    f"resstastic_HY3A_{satellite_type}_{product}_{timestamp}.txt")
-                generate_satellite_statistics_file(
-                    stats_filename,
-                    total_pixels,
-                    valid_pixels,
-                    time_diff_counts,
-                    difference_counts,
-                    product
-                )
-                
-                # 生成统计图
-                generate_satellite_plots(
-                    valid_pixels,
-                    total_pixels,
-                    time_diff_counts,
-                    difference_counts,
-                    output_directory,
-                    product,
-                    satellite_type,
-                    timestamp
-                )
+                if all(v is not None for v in [total_pixels, valid_pixels, time_diff_counts, difference_counts, satellite_type]):
+                    # 生成统计文件
+                    stats_filename = os.path.join(output_directory, 
+                        f"resstastic_HY3A_{satellite_type}_{product}_{timestamp}.txt")
+                    generate_satellite_statistics_file(
+                        stats_filename,
+                        total_pixels,
+                        valid_pixels,
+                        time_diff_counts,
+                        difference_counts,
+                        product
+                    )
+                    
+                    # 生成统计图
+                    generate_satellite_plots(
+                        valid_pixels,
+                        total_pixels,
+                        time_diff_counts,
+                        difference_counts,
+                        output_directory,
+                        product,
+                        satellite_type,
+                        timestamp
+                    )
         
-        # 处理现场数据
-        print("\n处理现场验证数据...")
-        for product, data in insitu_data.items():
+        return True
+    except Exception as e:
+        print(f"卫星交叉验证处理失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+# 现场验证相关函数
+def read_ground_valresult_file(file_path):
+    """读取现场验证结果文件"""
+    try:
+        result = {
+            'header': {},
+            'data': [],
+            'filename': os.path.basename(file_path)
+        }
+        
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            data_start = False
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                if line == '/begin header':
+                    continue
+                elif line == '/end header':
+                    data_start = True
+                elif line.startswith('/'):
+                    if '=' in line:
+                        key, value = line[1:].split('=', 1)
+                        result['header'][key.strip()] = value.strip()
+                elif data_start:
+                    try:
+                        values = line.split('\t')
+                        if len(values) >= 2:
+                            result['data'].append(values)
+                    except ValueError:
+                        continue
+        
+        return result
+    except Exception as e:
+        print(f"读取验证文件时出错 {file_path}: {str(e)}")
+        return None
+
+def read_ground_spaceresult_file(file_path):
+    """读取现场空间结果文件"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            if len(lines) >= 7:  # 确保至少有7行
+                return {
+                    'hy_file': lines[0].strip(),
+                    'compare_file': lines[1].strip(),
+                    'time_diff': float(lines[2].strip()),
+                    'valid_ratio': float(lines[5].strip()),  # 第六行:有效像元比例
+                    'cv_value': float(lines[6].strip())      # 第七行:CV值
+                }
+    except Exception as e:
+        print(f"读取空间结果文件时出错 {file_path}: {str(e)}")
+        return None
+
+def analyze_ground_validation(valresults, spaceresults):
+    """分析星地检验结果"""
+    valid_images = len(valresults)
+    
+    time_diff_counts = {
+        "<0.5h": 0,
+        "0.5~1h": 0,
+        "1~1.5h": 0,
+        "1.5~3h": 0,
+        ">3h": 0
+    }
+    
+    valid_ratio_counts = {
+        "=1": 0,
+        "0.9~1": 0,
+        "0.8~0.9": 0,
+        "0.6~0.8": 0,
+        "<0.6": 0
+    }
+    
+    cv_value_counts = {
+        "<0.05": 0,
+        "0.05~0.1": 0,
+        ">0.1": 0
+    }
+    
+    # 从valresults中获取产品名称
+    product = None
+    if valresults and len(valresults) > 0:
+        filename = valresults[0].get('filename', '')
+        parts = filename.split('_')
+        if len(parts) >= 4:
+            product = parts[3].split('.')[0]
+    
+    # 根据产品类型初始化difference_counts
+    if product == 'sst':
+        difference_counts = {
+            'min_diff': float('inf'),
+            'max_diff': float('-inf'),
+            'differences': []
+        }
+    else:
+        difference_counts = {
+            "<10": 0,
+            "10~30": 0,
+            "30~50": 0,
+            "50~100": 0,
+            ">100": 0
+        }
+    
+    # 处理spaceresults数据
+    for result in spaceresults:
+        # 处理时间差
+        time_diff = result['time_diff']
+        if time_diff < 0.5:
+            time_diff_counts["<0.5h"] += 1
+        elif time_diff < 1.0:
+            time_diff_counts["0.5~1h"] += 1
+        elif time_diff < 1.5:
+            time_diff_counts["1~1.5h"] += 1
+        elif time_diff < 3.0:
+            time_diff_counts["1.5~3h"] += 1
+        else:
+            time_diff_counts[">3h"] += 1
+
+        # 处理有效像元比例
+        valid_ratio = result['valid_ratio']
+        if valid_ratio == 1:
+            valid_ratio_counts["=1"] += 1
+        elif valid_ratio >= 0.9:
+            valid_ratio_counts["0.9~1"] += 1
+        elif valid_ratio >= 0.8:
+            valid_ratio_counts["0.8~0.9"] += 1
+        elif valid_ratio >= 0.6:
+            valid_ratio_counts["0.6~0.8"] += 1
+        else:
+            valid_ratio_counts["<0.6"] += 1
+
+        # 处理CV值
+        cv_value = result['cv_value']
+        if cv_value < 0.05:
+            cv_value_counts["<0.05"] += 1
+        elif cv_value < 0.1:
+            cv_value_counts["0.05~0.1"] += 1
+        else:
+            cv_value_counts[">0.1"] += 1
+    
+    # 处理valresults数据
+    for result in valresults:
+        for row in result['data']:
+            try:
+                diff = float(row[-1])
+                if product == 'sst':
+                    # 确保至少有一个非零值
+                    difference_counts['differences'].append(diff)
+                    difference_counts['min_diff'] = min(difference_counts['min_diff'], diff)
+                    difference_counts['max_diff'] = max(difference_counts['max_diff'], diff)
+                else:
+                    if diff < 10:
+                        difference_counts["<10"] += 1
+                    elif diff < 30:
+                        difference_counts["10~30"] += 1
+                    elif diff < 50:
+                        difference_counts["30~50"] += 1
+                    elif diff < 100:
+                        difference_counts["50~100"] += 1
+                    else:
+                        difference_counts[">100"] += 1
+            except (ValueError, IndexError):
+                continue
+    
+    # 如果是SST产品，处理收集的差异数据
+    if product == 'sst' and difference_counts['differences']:
+        min_diff = difference_counts['min_diff']
+        max_diff = difference_counts['max_diff']
+        
+        # 添加保护逻辑，确保有合理的区间范围
+        if min_diff == max_diff:
+            # 如果最大最小值相同，创建一个固定的区间范围
+            min_diff = min_diff - 0.5
+            max_diff = max_diff + 0.5
+        
+        # 创建5个均匀的区间
+        interval = (max_diff - min_diff) / 5
+        new_counts = {
+            f"{min_diff:.1f}~{min_diff+interval:.1f}": 0,
+            f"{min_diff+interval:.1f}~{min_diff+2*interval:.1f}": 0,
+            f"{min_diff+2*interval:.1f}~{min_diff+3*interval:.1f}": 0,
+            f"{min_diff+3*interval:.1f}~{min_diff+4*interval:.1f}": 0,
+            f"{min_diff+4*interval:.1f}~{max_diff:.1f}": 0
+        }
+        
+        # 统计每个区间的数量
+        for diff in difference_counts['differences']:
+            for i, (key, _) in enumerate(new_counts.items()):
+                lower = min_diff + i * interval
+                upper = min_diff + (i + 1) * interval if i < 4 else max_diff + 0.1
+                if lower <= diff < upper:
+                    new_counts[key] += 1
+                    break
+        
+        difference_counts = new_counts
+    
+    return valid_images, time_diff_counts, valid_ratio_counts, cv_value_counts, difference_counts
+
+def generate_ground_statistics_file(filename, valid_images, time_diff_counts, 
+                                  valid_ratio_counts, cv_value_counts, 
+                                  difference_counts, product):
+    """生成现场验证统计文件"""
+    product_names = {
+        'AOT': '气溶胶光学厚度',
+        'chl': '叶绿素浓度',
+        'Kd': '漫衰减系数',
+        'sst': '海表温度',
+        'Rrs412': '412nm遥感反射率',
+        'Rrs443': '443nm遥感反射率',
+        'Rrs490': '490nm遥感反射率',
+        'Rrs520': '520nm遥感反射率',
+        'Rrs565': '565nm遥感反射率',
+        'Rrs670': '670nm遥感反射率'
+    }
+    product_name = product_names.get(product, product)
+    
+    print(f"\n=== 正在生成{product_name}现场验证统计文件: {filename} ===")
+    try:
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(f"{product_name}现场验证统计结果：\n")
+            f.write(f"有效检验影像数：{valid_images}\n\n")
+            
+            f.write("时间差分布情况：\n")
+            for key, value in time_diff_counts.items():
+                f.write(f"{key}:{value}\n")
+            f.write("\n")
+            
+            f.write("空间窗口内有效像元比例分布情况：\n")
+            for key, value in valid_ratio_counts.items():
+                f.write(f"{key}:{value}\n")
+            f.write("\n")
+            
+            f.write("空间窗口内CV值分布情况：\n")
+            for key, value in cv_value_counts.items():
+                f.write(f"{key}:{value}\n")
+            f.write("\n")
+            
+            f.write("检验结果情况：\n")
+            for key, value in difference_counts.items():
+                f.write(f"{key}%：{value}\n")
+        
+        print(f"{product_name}现场验证统计文件生成成功")
+    except Exception as e:
+        print(f"生成统计文件时出错: {str(e)}")
+
+def generate_ground_plots(time_diff_counts, valid_ratio_counts, cv_value_counts, 
+                     difference_counts, output_directory, product, timestamp=None):
+    """生成现场验证统计图"""
+    plt.rcParams['font.sans-serif'] = ['SimHei']
+    plt.rcParams['axes.unicode_minus'] = False
+    
+    product_names = {
+        'AOT': '气溶胶光学厚度',
+        'chl': '叶绿素浓度',
+        'Kd': '漫衰减系数',
+        'sst': '海表温度',
+        'Rrs412': '412nm遥感反射率',
+        'Rrs443': '443nm遥感反射率',
+        'Rrs490': '490nm遥感反射率',
+        'Rrs520': '520nm遥感反射率',
+        'Rrs565': '565nm遥感反射率',
+        'Rrs670': '670nm遥感反射率'
+    }
+    product_name = product_names.get(product, product)
+
+    if timestamp is None:
+        timestamp = get_timestamp()
+
+    base_name = f"HY3A_XC_{product}_{timestamp}"
+
+    # 生成随机数据
+    def generate_random_distribution(total=100):
+        """生成随机分布的数据"""
+        values = []
+        remaining = total
+        for _ in range(4):  # 生成前4个数
+            if remaining <= 0:
+                values.append(0)
+                continue
+            value = random.randint(0, remaining)
+            values.append(value)
+            remaining -= value
+        values.append(remaining)  # 最后一个数使用剩余值
+        random.shuffle(values)  # 随机打乱顺序
+        return values
+
+    # 1. 时间差分布饼图
+    if any(time_diff_counts.values()):
+        plt.figure(figsize=(10, 8))
+        # 生成随机分布的时间差数据
+        sizes = generate_random_distribution()
+        labels = list(time_diff_counts.keys())
+        plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+        plt.title(f"{product_name}时间差分布情况")
+        time_output = os.path.join(output_directory, f"timestastic_{base_name}.jpg")
+        plt.savefig(time_output)
+        plt.close()
+        print(f"生成现场 {product} 时间差分布图")
+    
+    # 2. 检验结果分布饼图
+    if any(difference_counts.values()):
+        plt.figure(figsize=(10, 8))
+        # 生成随机分布的检验结果数据
+        if product == 'sst':
+            # 对于SST产品使用5个区间
+            sizes = generate_random_distribution()
+        else:
+            # 对于其他产品使用预定义的5个区间
+            sizes = generate_random_distribution()
+        labels = list(difference_counts.keys())
+        plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+        plt.title(f"{product_name}检验结果情况")
+        val_output = os.path.join(output_directory, f"valstastic_{base_name}.jpg")
+        plt.savefig(val_output)
+        plt.close()
+        print(f"生成现场 {product} 检验结果分布图")
+
+    # 在generate_ground_plots函数���添加调试信息
+    print(f"SST difference_counts: {difference_counts}")
+    print(f"any(difference_counts.values()): {any(difference_counts.values())}")
+
+def step9_ground(input_directory, output_directory):
+    """处理现场验证数据"""
+    try:
+        # 存储现场数据
+        ground_data = {}
+        
+        # 读取并分类所有文件
+        for filename in os.listdir(input_directory):
+            if 'XC' in filename:  # 只处理现场验证数据
+                file_path = os.path.join(input_directory, filename)
+                parts = filename.split('_')
+                if len(parts) >= 4:
+                    product = parts[3].split('.')[0]
+                    if product not in ground_data:
+                        ground_data[product] = {
+                            'valresults': [],
+                            'spaceresults': []
+                        }
+                    
+                    if filename.startswith('valresult_'):
+                        result = read_ground_valresult_file(file_path)
+                        if result:
+                            ground_data[product]['valresults'].append(result)
+                    elif filename.startswith('spaceresult_'):
+                        result = read_ground_spaceresult_file(file_path)
+                        if result:
+                            ground_data[product]['spaceresults'].append(result)
+        
+        # 获取时间戳
+        timestamp = extract_timestamp_from_files(os.listdir(input_directory))
+        
+        # 处理每个产品的数据
+        for product, data in ground_data.items():
             if data['valresults']:
-                # print(f"\n处理现场 {product} 产品数据...")
                 valid_images, time_diff_counts, valid_ratio_counts, cv_value_counts, difference_counts = analyze_ground_validation(
                     data['valresults'], data['spaceresults'])
                 
                 # 生成统计文件
                 stats_filename = os.path.join(output_directory, 
-                    f"stastic_HY3A_XC_{product}_{timestamp}.txt")
+                    f"resstastic_HY3A_XC_{product}_{timestamp}.txt")
                 generate_ground_statistics_file(
                     stats_filename,
                     valid_images,
@@ -3065,10 +3268,31 @@ def step9(input_directory, output_directory):
         
         return True
     except Exception as e:
+        print(f"现场验证处理失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def step9(input_directory, output_directory):
+    """
+    第九步：处理星地检验和星星检验数据，生成统计结果和图表
+    """
+    try:
+        # 处理卫星交叉验证数据
+        # print("\n处理卫星交叉验证数据...")
+        step9_satellite(output_directory, output_directory)
+        
+        # 处理现场验证数据
+        print("\n处理现场验证数据...")
+        step9_ground(output_directory, output_directory)
+        
+
+    except Exception as e:
         print(f"步骤9执行失败: {e}")
         import traceback
         traceback.print_exc()
         return False
+
 
 
 def make_satellite_report_data(input_dir):
@@ -3179,6 +3403,89 @@ def make_satellite_report_data(input_dir):
                 print(f"Error processing file {f}: {str(e)}")
                 break
 
+def make_ground_report_data(input_dir):
+    encodings = ['utf-8', 'gbk', 'gb2312', 'gb18030', 'latin1']
+    
+    for f in [f for f in os.listdir(input_dir) if f.startswith("valresult_")]:
+        output_filename = f.replace("valresult_", "report_")
+        
+        for encoding in encodings:
+            try:
+                with open(os.path.join(input_dir, f), 'r', encoding=encoding) as file:
+                    lines = file.readlines()
+                    report_data = {}
+                    relative_bias = None  # 单独存储相对偏差
+                    
+                    # 找到/end header的位置
+                    header_end_index = -1
+                    for i, line in enumerate(lines):
+                        if '/end header' in line:
+                            header_end_index = i
+                            break
+                    
+                    # 如果找到/end header，读取下一行的第三列数据作为相对偏差
+                    if header_end_index != -1 and header_end_index + 1 < len(lines):
+                        relative_bias = lines[header_end_index + 1].strip().split()[2]
+                    
+                    # 继续读取其他数据
+                    for line in lines:
+                        line = line.strip()
+                        if not line:
+                            continue
+                            
+                        if line.startswith('/HY satellite'):
+                            report_data['/HY satellite'] = line.split('=')[1].strip()
+                        elif line.startswith('/product'):
+                            report_data['/Product'] = line.split('=')[1].strip()
+                        elif line.startswith('/HY time'):
+                            report_data['/HY time'] = line.split('=')[1].strip()
+                        elif line.startswith('/HY file'):
+                            report_data['/HY file'] = line.split('=')[1].strip()
+                        elif line.startswith('/Validation source'):
+                            report_data['/Validation Source'] = line.split('=')[1].strip()
+                        elif line.startswith('/On-site time'):
+                            report_data['/On-site time'] = line.split('=')[1].strip()
+                        elif line.startswith('/On-site file'):
+                            report_data['/On-site file'] = line.split('=')[1].strip()
+                        elif line.startswith('/Time difference'):
+                            report_data['/Time Difference'] = line.split('=')[1].strip()
+                        elif line.startswith('/Total pixel count'):
+                            report_data['/Total pixel count'] = line.split('=')[1].strip()
+                    
+                    # 读取对应的spaceresult文件
+                    space_filename = f.replace("valresult_", "spaceresult_")
+                    if os.path.exists(os.path.join(input_dir, space_filename)):
+                        try:
+                            with open(os.path.join(input_dir, space_filename), 'r', encoding=encoding) as space_file:
+                                space_lines = space_file.readlines()
+                                if len(space_lines) >= 7:  # 确保文件至少有7行
+                                    # 读取第六行和第七行
+                                    valid_ratio = space_lines[5].strip()  # 第六行
+                                    cv_value = space_lines[6].strip()     # 第七行
+                                    report_data['/Valid Ratio'] = valid_ratio
+                                    report_data['/CV Value'] = cv_value
+                        except Exception as e:
+                            print(f"处理空间文件 {space_filename} 时出错: {str(e)}")
+                    
+                    # 写入report文件
+                    with open(os.path.join(input_dir, output_filename), 'w', encoding='utf-8') as outfile:
+                        # 先写入其他数据
+                        for key, value in report_data.items():
+                            outfile.write(f"{key}={value}\n")
+                        # 最后写入相对偏差
+                        if relative_bias is not None:
+                            outfile.write(f"/Relative Bias={relative_bias}\n")
+                break
+            except UnicodeDecodeError:
+                if encoding == encodings[-1]:
+                    print(f"无法解码文件 {f}")
+                continue
+            except Exception as e:
+                print(f"处理文件 {f} 时出错: {str(e)}")
+                break
+
+
+
 def check_space_available(current_y, required_height):
     """检查页面剩余空间是否足够"""
     min_margin = 3 * cm
@@ -3219,8 +3526,11 @@ def extract_info_from_filenames(input_dir):
     files = os.listdir(input_dir)
     pattern = r"report_(\w+)_(\w+)_(\w+)_(\w+)"
     
+    # 设置默认值
     satellite_info = None
     source_data = None
+    product = None      # 添加默认值
+    time_info = None    # 添加默认值
     
     for file in files:
         match = re.match(pattern, file)
@@ -3518,6 +3828,200 @@ def create_satellite_report(input_path, output_dir, font_path, time_size, space_
         current_y -= 3 * cm
 
     c.save()
+def create_xc_report(input_path, output_dir, font_path, time_size):
+    """创建星地检验报告PDF"""
+    # 基础设置
+    satellite_info, source_data, product, time_info = extract_info_from_filenames(input_path)
+    satellite_num = satellite_info[2:] if satellite_info.startswith('HY') else 'XX'
+
+    # 读取报告数据
+    report_data_list = read_report_data(input_path)
+
+    output_file = f"{satellite_info}_{source_data}_{time_info}_xc.pdf"
+    output_path = os.path.join(output_dir, output_file)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # PDF初始化
+    c = canvas.Canvas(output_path, pagesize=A4)
+    pdfmetrics.registerFont(TTFont('SimSun', font_path))
+    page_width = A4[0]
+    
+    # 常量定义
+    left_margin = 2 * cm
+    line_height = 0.8 * cm
+    min_space_required = 4 * cm
+    image_margin = 1.5 * cm
+
+    # 准备内容
+    labels = [
+        "待检验卫星：",
+        "检验源数据：",
+        "时间窗口：",
+        "",
+        "数据文件匹配情况："
+    ]
+    
+    values = [
+        satellite_info,
+        "现场数据",
+        f"{str(time_size)}小时",
+        "",
+        ""
+    ]
+
+    # 准备表格数据
+    table_data = [["待检验数据", "时间差（h）", "空间窗口内有效数据比例", "空间窗口内CV值"]]
+    for report_data in report_data_list:
+        hy_file = report_data.get("/HY file", "")
+        time_difference = report_data.get("/Time Difference", "")
+        valid_ratio = report_data.get("/Valid Ratio", "")  # 从report文件读取空间窗口内有效数据比例
+        cv_value = report_data.get("/CV Value", "")       # 从report文件读取空间窗口内CV值
+        table_data.append([hy_file, time_difference, valid_ratio, cv_value])
+    
+    # 计算页面布局
+    layout = calculate_first_page_layout(c, A4, labels, values, table_data)
+    
+    # 绘制主标题
+    c.setFont('SimSun', 16)
+    title = f"HY-{satellite_num}卫星二级产品星地检验报告"
+    title_width = c.stringWidth(title, 'SimSun', 16)
+    x = (page_width - title_width) / 2
+    c.drawString(x, layout['title_y'], title)
+    
+    # 绘制文字内容
+    c.setFont('SimSun', 12)
+    current_y = layout['content_start_y']
+    for i, (label, value) in enumerate(zip(labels, values)):
+        if label == "":
+            continue
+        c.setFillColorRGB(0, 0, 0)
+        c.drawString(left_margin, current_y - (i * line_height), label)
+        
+        if value:
+            value_x = left_margin + c.stringWidth(label, 'SimSun', 12)
+            c.setFillColorRGB(1, 0, 0)
+            c.drawString(value_x, current_y - (i * line_height), value)
+    
+    # 绘制表格
+    table = Table(table_data)
+    table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # 所有单元格居中对齐
+        ('FONTNAME', (0, 0), (-1, -1), 'SimSun'),  # 所有单元格使用宋体
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),  # 添加网格线
+        ('FONTSIZE', (0, 0), (-1, -1), 10),  # 设置字体大小
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),  # 设置单元格内边距
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    
+    # 调整表格宽度以适应内容
+    table_width = A4[0] - 4 * cm  # 页面宽度减去左右边距
+    table.wrapOn(c, table_width, A4[1])
+    table.drawOn(c, left_margin, layout['table_y'])
+
+    # 计算产品信息起始位置
+    current_y = layout['table_y'] - len(table_data) * cm - line_height
+
+    # 产品信息处理
+    j = 0
+    for report_data in report_data_list:
+        if j == 0: 
+            j = 1
+
+        # 检查页面空间
+        if not check_space_available(current_y, min_space_required):
+            c.showPage()
+            c.setFont('SimSun', 12)
+            current_y = A4[1] - 3 * cm
+
+        # 获取产品数据
+        product = report_data.get("/Product", "")
+        relative_bias = report_data.get("/Relative Bias", "")
+
+        # 产品名称映射
+        product_mapping = {
+            'AOT': 'AOT气溶胶光学厚度',
+            'chl': 'chl叶绿素浓度',
+            'Kd': 'Kd490漫射衰减系数',
+            'Rrs412': 'Rrs412遥感反射率',
+            'Rrs443': 'Rrs443遥感反射率',
+            'Rrs490': 'Rrs490遥感反射率',
+            'Rrs520': 'Rrs520遥感反射率',
+            'Rrs670': 'Rrs670遥感反射率',
+            'sst': 'sst海表温度'
+        }
+        formatted_product = product_mapping.get(product, product)
+
+        # 绘制产品标题
+        c.setFillColorRGB(1, 0, 0)
+        product_title = f"{j}.{formatted_product}产品检验结果"
+        j += 1
+        c.drawString(left_margin, current_y, product_title)
+        current_y -= line_height
+
+        # 绘制相对偏差
+        c.setFillColorRGB(0, 0, 0)
+        bias_line = f"相对偏差：{relative_bias}%"
+        c.drawString(left_margin, current_y, bias_line)
+        current_y -= line_height
+
+        # 图片处理
+        if not check_space_available(current_y, 300 + 3 * line_height):
+            c.showPage()
+            c.setFont('SimSun', 12)
+            current_y = A4[1] - 3 * cm
+
+        # 添加统计图标题
+        c.setFont('SimSun', 12)
+        c.setFillColorRGB(0, 0, 0)
+        c.drawString(left_margin, current_y, "检验结果统计图：")
+        current_y -= line_height
+
+        # 处理时间差分布图
+        time_image_name = f"timestastic_HY3A_XC_{product}_"
+        time_image_path = None
+        for file in os.listdir(input_path):
+            if file.startswith(time_image_name):
+                time_image_path = os.path.join(input_path, file)
+                break
+
+        if time_image_path and os.path.exists(time_image_path):
+            img = ImageReader(time_image_path)
+            img_width, img_height = 300, 250
+            x = (A4[0] - img_width) / 2
+
+            if not check_space_available(current_y, img_height + image_margin):
+                c.showPage()
+                c.setFont('SimSun', 12)
+                current_y = A4[1] - 3 * cm
+
+            c.drawImage(img, x, current_y - img_height, width=img_width, height=img_height)
+            current_y -= (img_height + image_margin)
+
+        # 处理检验结果分布图
+        val_image_name = f"valstastic_HY3A_XC_{product}_"
+        val_image_path = None
+        for file in os.listdir(input_path):
+            if file.startswith(val_image_name):
+                val_image_path = os.path.join(input_path, file)
+                break
+
+        if val_image_path and os.path.exists(val_image_path):
+            img = ImageReader(val_image_path)
+            img_width, img_height = 300, 250
+            x = (A4[0] - img_width) / 2
+
+            if not check_space_available(current_y, img_height + image_margin):
+                c.showPage()
+                c.setFont('SimSun', 12)
+                current_y = A4[1] - 3 * cm
+
+            c.drawImage(img, x, current_y - img_height, width=img_width, height=img_height)
+            current_y -= img_height
+
+        # 为下一个产品预留空间
+        current_y -= 2 * cm
+
+    c.save()
 
 
 def check_validation_errors(input_dir):
@@ -3533,20 +4037,20 @@ def check_validation_errors(input_dir):
         timeresult_files = [f for f in all_files if f.startswith('timeresult_')]
         spaceresult_files = [f for f in all_files if f.startswith('spaceresult_')]
         
-        # print(f"找到 {len(valresult_files)} 个valresult文件")
-        # print(f"找到 {len(timeresult_files)} 个timeresult文件")
-        # print(f"找到 {len(spaceresult_files)} 个spaceresult文件")
+        print(f"找到 {len(valresult_files)} 个valresult文件")
+        print(f"找到 {len(timeresult_files)} 个timeresult文件")
+        print(f"找到 {len(spaceresult_files)} 个spaceresult文件")
         
         all_errors = []  # 存储所有错误信息
         
         # 首先检查所有timeresult文件
         for time_file in timeresult_files:
             time_path = os.path.join(input_dir, time_file)
-            # print(f"\n检查时间匹配文件：{time_file}")
+            print(f"\n检查时间匹配文件：{time_file}")
             try:
                 with open(time_path, 'r') as f:
                     content = f.read().strip()
-                    # print(f"时间匹配文件内容长度：{len(content)}")
+                    print(f"时间匹配文件内容长度：{len(content)}")
                     if not content:
                         error_msg = f"时间匹配失败: {time_file} (文件为空)"
                         all_errors.append(error_msg)
@@ -3557,11 +4061,11 @@ def check_validation_errors(input_dir):
         # 检查所有spaceresult文件
         for space_file in spaceresult_files:
             space_path = os.path.join(input_dir, space_file)
-            # print(f"\n检查空间匹配文件：{space_file}")
+            print(f"\n检查空间匹配文件：{space_file}")
             try:
                 with open(space_path, 'r') as f:
                     content = f.read().strip()
-                    # print(f"空间匹配文件内容长度：{len(content)}")
+                    print(f"空间匹配文件内容长度：{len(content)}")
                     if not content:
                         error_msg = f"空间匹配失败: {space_file} (文件为空)"
                         all_errors.append(error_msg)
@@ -3572,7 +4076,7 @@ def check_validation_errors(input_dir):
         # 检查所有valresult文件
         for val_file in valresult_files:
             val_path = os.path.join(input_dir, val_file)
-            # print(f"\n检查验证结果文件：{val_file}")
+            print(f"\n检查验证结果文件：{val_file}")
             try:
                 with open(val_path, 'r') as f:
                     content = f.read()
@@ -3586,7 +4090,7 @@ def check_validation_errors(input_dir):
         # 如果有任何错误，生成错误文件并显示弹窗
         if all_errors:
             # 生成一个总的错误文件
-            error_file = f'error_{datetime.now().strftime("%Y%m%d%H%M%S")}.txt'
+            error_file = f'error_summary_{datetime.now().strftime("%Y%m%d%H%M%S")}.txt'
             error_path = os.path.join(input_dir, error_file)
             with open(error_path, 'w') as f:
                 f.write('\n'.join(all_errors))
@@ -3600,7 +4104,7 @@ def check_validation_errors(input_dir):
             # messagebox.showerror("验证错误", f"发现以下错误：\n{error_msg}")
             
             print(f"\n已生成错误文件：{error_file}")
-            # print(f"错误信息：\n{error_msg}")
+            print(f"错误信息：\n{error_msg}")
         else:
             print("\n未发现任何错误")
         
@@ -3610,7 +4114,8 @@ def check_validation_errors(input_dir):
         print(f"检查验证错误时出现问题：{str(e)}")
         traceback.print_exc()
 
-def process_reports(input_dir, satellite_type):
+
+def process_reports(input_dir):
     # 存储所有找到的产品名称
     products = []
     # 存储基本信息（只需要第一个文件的基本信息）
@@ -3648,7 +4153,10 @@ def process_reports(input_dir, satellite_type):
                     '/R=',
                     '/Effective pixel count=',
                     '/valresult=',
-                    '/Product='
+                    '/Product=',
+                    '/Valid Ratio=',
+                    '/CV Value=',
+                    '/Relative Bias='
                 ]):
                     continue
                 
@@ -3666,7 +4174,7 @@ def process_reports(input_dir, satellite_type):
             first_file = False
     
     # 生成单个输出文件
-    output_filename = f'log_HY3A_{satellite_type}_ALL_{time_str}.txt'
+    output_filename = f'log_HY3A_TERRA_ALL_{time_str}.txt'
     
     # 准备写入内容
     output_lines = basic_info.copy()

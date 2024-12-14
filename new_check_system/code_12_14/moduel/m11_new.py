@@ -350,10 +350,207 @@ def create_satellite_report(input_path, output_dir, font_path, time_size, space_
         current_y -= 3 * cm
 
     c.save()
+def create_xc_report(input_path, output_dir, font_path, time_size):
+    """创建星地检验报告PDF"""
+    # 基础设置
+    satellite_info, source_data, product, time_info = extract_info_from_filenames(input_path)
+    satellite_num = satellite_info[2:] if satellite_info.startswith('HY') else 'XX'
+
+    # 读取报告数据
+    report_data_list = read_report_data(input_path)
+
+    output_file = f"{satellite_info}_{source_data}_{time_info}_xc.pdf"
+    output_path = os.path.join(output_dir, output_file)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # PDF初始化
+    c = canvas.Canvas(output_path, pagesize=A4)
+    pdfmetrics.registerFont(TTFont('SimSun', font_path))
+    page_width = A4[0]
+    
+    # 常量定义
+    left_margin = 2 * cm
+    line_height = 0.8 * cm
+    min_space_required = 4 * cm
+    image_margin = 1.5 * cm
+
+    # 准备内容
+    labels = [
+        "待检验卫星：",
+        "检验源数据：",
+        "时间窗口：",
+        "",
+        "数据文件匹配情况："
+    ]
+    
+    values = [
+        satellite_info,
+        "现场数据",
+        f"{str(time_size)}小时",
+        "",
+        ""
+    ]
+
+    # 准备表格数据
+    table_data = [["待检验数据", "时间差（h）", "空间窗口内有效数据比例", "空间窗口内CV值"]]
+    for report_data in report_data_list:
+        hy_file = report_data.get("/HY file", "")
+        time_difference = report_data.get("/Time Difference", "")
+        valid_ratio = report_data.get("/Valid Ratio", "")  # 从report文件读取空间窗口内有效数据比例
+        cv_value = report_data.get("/CV Value", "")       # 从report文件读取空间窗口内CV值
+        table_data.append([hy_file, time_difference, valid_ratio, cv_value])
+    
+    # 计算页面布局
+    layout = calculate_first_page_layout(c, A4, labels, values, table_data)
+    
+    # 绘制主标题
+    c.setFont('SimSun', 16)
+    title = f"HY-{satellite_num}卫星二级产品星地检验报告"
+    title_width = c.stringWidth(title, 'SimSun', 16)
+    x = (page_width - title_width) / 2
+    c.drawString(x, layout['title_y'], title)
+    
+    # 绘制文字内容
+    c.setFont('SimSun', 12)
+    current_y = layout['content_start_y']
+    for i, (label, value) in enumerate(zip(labels, values)):
+        if label == "":
+            continue
+        c.setFillColorRGB(0, 0, 0)
+        c.drawString(left_margin, current_y - (i * line_height), label)
+        
+        if value:
+            value_x = left_margin + c.stringWidth(label, 'SimSun', 12)
+            c.setFillColorRGB(1, 0, 0)
+            c.drawString(value_x, current_y - (i * line_height), value)
+    
+    # 绘制表格
+    table = Table(table_data)
+    table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # 所有单元格居中对齐
+        ('FONTNAME', (0, 0), (-1, -1), 'SimSun'),  # 所有单元格使用宋体
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),  # 添加网格线
+        ('FONTSIZE', (0, 0), (-1, -1), 10),  # 设置字体大小
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),  # 设置单元格内边距
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    
+    # 调整表格宽度以适应内容
+    table_width = A4[0] - 4 * cm  # 页面宽度减去左右边距
+    table.wrapOn(c, table_width, A4[1])
+    table.drawOn(c, left_margin, layout['table_y'])
+
+    # 计算产品信息起始位置
+    current_y = layout['table_y'] - len(table_data) * cm - line_height
+
+    # 产品信息处理
+    j = 0
+    for report_data in report_data_list:
+        if j == 0: 
+            j = 1
+
+        # 检查页面空间
+        if not check_space_available(current_y, min_space_required):
+            c.showPage()
+            c.setFont('SimSun', 12)
+            current_y = A4[1] - 3 * cm
+
+        # 获取产品数据
+        product = report_data.get("/Product", "")
+        relative_bias = report_data.get("/Relative Bias", "")
+
+        # 产品名称映射
+        product_mapping = {
+            'AOT': 'AOT气溶胶光学厚度',
+            'chl': 'chl叶绿素浓度',
+            'Kd': 'Kd490漫射衰减系数',
+            'Rrs412': 'Rrs412遥感反射率',
+            'Rrs443': 'Rrs443遥感反射率',
+            'Rrs490': 'Rrs490遥感反射率',
+            'Rrs520': 'Rrs520遥感反射率',
+            'Rrs670': 'Rrs670遥感反射率',
+            'sst': 'sst海表温度'
+        }
+        formatted_product = product_mapping.get(product, product)
+
+        # 绘制产品标题
+        c.setFillColorRGB(1, 0, 0)
+        product_title = f"{j}.{formatted_product}产品检验结果"
+        j += 1
+        c.drawString(left_margin, current_y, product_title)
+        current_y -= line_height
+
+        # 绘制相对偏差
+        c.setFillColorRGB(0, 0, 0)
+        bias_line = f"相对偏差：{relative_bias}"
+        c.drawString(left_margin, current_y, bias_line)
+        current_y -= line_height
+
+        # 图片处理
+        if not check_space_available(current_y, 300 + 3 * line_height):
+            c.showPage()
+            c.setFont('SimSun', 12)
+            current_y = A4[1] - 3 * cm
+
+        # 添加统计图标题
+        c.setFont('SimSun', 12)
+        c.setFillColorRGB(0, 0, 0)
+        c.drawString(left_margin, current_y, "检验结果统计图：")
+        current_y -= line_height
+
+        # 处理时间差分布图
+        time_image_name = f"timestastic_HY3A_XC_{product}_"
+        time_image_path = None
+        for file in os.listdir(input_path):
+            if file.startswith(time_image_name):
+                time_image_path = os.path.join(input_path, file)
+                break
+
+        if time_image_path and os.path.exists(time_image_path):
+            img = ImageReader(time_image_path)
+            img_width, img_height = 300, 250
+            x = (A4[0] - img_width) / 2
+
+            if not check_space_available(current_y, img_height + image_margin):
+                c.showPage()
+                c.setFont('SimSun', 12)
+                current_y = A4[1] - 3 * cm
+
+            c.drawImage(img, x, current_y - img_height, width=img_width, height=img_height)
+            current_y -= (img_height + image_margin)
+
+        # 处理检验结果分布图
+        val_image_name = f"valstastic_HY3A_XC_{product}_"
+        val_image_path = None
+        for file in os.listdir(input_path):
+            if file.startswith(val_image_name):
+                val_image_path = os.path.join(input_path, file)
+                break
+
+        if val_image_path and os.path.exists(val_image_path):
+            img = ImageReader(val_image_path)
+            img_width, img_height = 300, 250
+            x = (A4[0] - img_width) / 2
+
+            if not check_space_available(current_y, img_height + image_margin):
+                c.showPage()
+                c.setFont('SimSun', 12)
+                current_y = A4[1] - 3 * cm
+
+            c.drawImage(img, x, current_y - img_height, width=img_width, height=img_height)
+            current_y -= img_height
+
+        # 为下一个产品预留空间
+        current_y -= 2 * cm
+
+    c.save()
+
 
 if __name__ == "__main__":
-    time_size = 5
+    time_size = 20000
     space_size = 5
     font_path = r"C:\Windows\Fonts\msyhl.ttc"
-    output_dir = r"C:\Users\H\Desktop\new_HY_check\code_12_11\moduel\test"
-    create_satellite_report(output_dir, output_dir, font_path, time_size, space_size)
+    output_dir = r"C:\Users\H\Desktop\new_HY_check\code_12_14\moduel\m3test_output"
+    # create_satellite_report(output_dir, output_dir, font_path, time_size, space_size)
+    create_xc_report(output_dir, output_dir, font_path, time_size)
+    

@@ -321,12 +321,12 @@ def process_xc_spacematch(input_dir, output_dir, target_sensor, window_size):
     
 def main():
     input_dir = r'C:\Users\H\Desktop\new_HY_check\output'
-    output_dir = r'C:\Users\H\Desktop\new_HY_check\output'
+    output_dir = r'C:\Users\H\Desktop\new_HY_check\code_12_14\moduel\m3test_output'
     target_sensor = 'HY3A'
     source_type = 'TERRA'
     window_size = 3
-    process_satellite_spacematch(input_dir, output_dir, target_sensor, source_type)
-    # process_xc_spacematch(input_dir, output_dir, target_sensor, window_size)
+    # process_satellite_spacematch(input_dir, output_dir, target_sensor, source_type)
+    process_xc_spacematch(output_dir, output_dir, target_sensor, window_size)
 
 if __name__ == "__main__":
     main()

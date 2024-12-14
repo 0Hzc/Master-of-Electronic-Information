@@ -345,12 +345,12 @@ def process_xc_timematch(input_dir, output_dir, target_sensor, time_threshold):
 
 def main():
     input_dir = r'C:\Users\H\Desktop\new_HY_check\output'
-    output_dir = r'C:\Users\H\Desktop\new_HY_check\output'
+    output_dir = r'C:\Users\H\Desktop\new_HY_check\code_12_14\moduel\m3test_output'
     target_sensor = 'HY3A'
     source_type = 'TERRA'
     time_threshold = 20000
-    process_satellite_timematch(input_dir, output_dir, target_sensor, source_type, time_threshold)
-    # process_xc_timematch(input_dir, output_dir, target_sensor, time_threshold)
+    # process_satellite_timematch(input_dir, output_dir, target_sensor, source_type, time_threshold)
+    process_xc_timematch(output_dir, output_dir, target_sensor, time_threshold)
 
 if __name__ == '__main__':
     main()
