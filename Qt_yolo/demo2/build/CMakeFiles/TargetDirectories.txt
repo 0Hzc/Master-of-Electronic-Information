@@ -1,0 +1,5 @@
+/home/ubuntu/Qt_project/demo2/build/CMakeFiles/yolo_code.dir
+/home/ubuntu/Qt_project/demo2/build/CMakeFiles/edit_cache.dir
+/home/ubuntu/Qt_project/demo2/build/CMakeFiles/rebuild_cache.dir
+/home/ubuntu/Qt_project/demo2/build/CMakeFiles/yolo_code_autogen_timestamp_deps.dir
+/home/ubuntu/Qt_project/demo2/build/CMakeFiles/yolo_code_autogen.dir
